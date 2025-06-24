@@ -1,0 +1,6 @@
+/target
+/wallets
+
+config.json
+
+.env
