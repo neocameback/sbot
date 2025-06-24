@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  sniper-bot:
+    build: .
+    container_name: solana-sniper-bot
+    environment:
+      - RUST_LOG=info
+    volumes:
+      - ./wallets:/app/wallets
+      - ./.env:/app/.env
+      - ./config.json:/app/config.json
+    restart: unless-stopped
+    command: ["./cli", "start"]
