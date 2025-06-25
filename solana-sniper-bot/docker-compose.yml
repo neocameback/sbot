@@ -3,11 +3,13 @@ services:
   sniper-bot:
     build: .
     container_name: solana-sniper-bot
-    environment:
-      - RUST_LOG=info
+    env_file:
+      - .env
     volumes:
       - ./wallets:/app/wallets
-      - ./.env:/app/.env
       - ./config.json:/app/config.json
     restart: unless-stopped
     command: ["./cli", "start"]
+    logging:
+      options:
+        max-size: 10m
