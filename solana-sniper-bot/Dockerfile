@@ -14,7 +14,7 @@
   RUN cargo build --release
   
   # ---- Runtime Stage ----
-  FROM debian:bullseye-slim
+  FROM debian:bookworm-slim
   
   WORKDIR /app
   
