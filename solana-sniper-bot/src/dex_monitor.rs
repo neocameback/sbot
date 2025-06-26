@@ -10,7 +10,6 @@ use solana_sdk::{signature::{Keypair, Signature}};
 use solana_transaction_status::{EncodedConfirmedTransactionWithStatusMeta, UiTransactionEncoding};
 use std::{str::FromStr};
 use tokio::sync::mpsc;
-use tokio::runtime::Runtime;
 use crate::websocket_monitor::{WebSocketMessage, PoolUpdate};
 use crate::telegram::TelegramSender;
 
@@ -242,9 +241,9 @@ fn decode_transaction(fetched_tx: &EncodedConfirmedTransactionWithStatusMeta) ->
             // Extract account keys from the UiParsedMessage
             match &ui_transaction.message.clone() {
                 solana_transaction_status::UiMessage::Parsed(parsed_message) => {
-                    let account_keys: Vec<String> = parsed_message.account_keys.iter()
-                        .map(|account| account.pubkey.clone())
-                        .collect();
+                    // let account_keys: Vec<String> = parsed_message.account_keys.iter()
+                    //     .map(|account| account.pubkey.clone())
+                    //     .collect();
                     // Process each instruction
                     for instruction in parsed_message.instructions.iter() {
                         match instruction {
