@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use anyhow::{Result};
 use log::{info};
@@ -46,13 +48,17 @@ impl TelegramSender {
 
   async fn send_telegram_message(&self,bot_token: &str, chat_id: &str, text: &str) -> Result<()> {
     let url = format!("https://api.telegram.org/bot{}/sendMessage", bot_token);
-    let params = [
-        ("chat_id", chat_id),
-        ("text", text),
-        ("parse_mode", "MarkdownV2"),
-    ];
-    info!("Sending Telegram message: {:?}", params);
-    reqwest::Client::new().post(&url).form(&params).send().await?;
+    // let payload = [
+    //     ("chat_id", chat_id),
+    //     ("text", text),
+    //     ("parse_mode", "MarkdownV2"),
+    // ];
+    let mut payload = HashMap::new();
+    payload.insert("chat_id", chat_id);
+    payload.insert("text", text);
+    payload.insert("parse_mode", "MarkdownV2");
+    info!("Sending Telegram message: {:?}", payload);
+    reqwest::Client::new().post(&url).header("Content-Type", "application/json").json(&payload).send().await?;
     Ok(())
   } 
 }
