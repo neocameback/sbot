@@ -1,14 +1,12 @@
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use log::{info, error};
-use serde_json;
 use std::fs;
 use std::path::Path;
 use solana_sdk::signature::{Keypair, Signer};
-use dotenv;
 use std::env;
 
-use solana_sniper_bot::{DexConfig, DexMonitor, MonitoringConfig, SafetyConfig, SniperConfig, SolanaSniperBot, TelegramConfig, TradingConfig};
+use solana_sniper_bot::{DexConfig, DexMonitor, MonitoringConfig, SafetyConfig, SniperConfig, SolanaSniperBot, TelegramConfig, TelegramSender, TradingConfig};
 
 fn create_default_config() -> SniperConfig {
     SniperConfig {
@@ -182,7 +180,11 @@ async fn start_bot(config_file: &str) -> Result<()> {
     let bot = SolanaSniperBot::new(config.clone())?;
     
     // Start monitoring
-    let telegram_config = Some((config.telegram.bot_token.clone(), config.telegram.chat_id.clone()));
+    let telegram_config = TelegramConfig {
+        bot_token: config.telegram.bot_token.clone(),
+        chat_id: config.telegram.chat_id.clone(),
+    };
+    let telegram_sender = TelegramSender::new(telegram_config);
     let dex_config = solana_sniper_bot::dex_monitor::DexConfig {
         raydium_api_url: config.dex_config.raydium_api_url.clone(),
         orca_api_url: config.dex_config.orca_api_url.clone(),
@@ -193,7 +195,7 @@ async fn start_bot(config_file: &str) -> Result<()> {
     let _dex_monitor = DexMonitor::new(
         dex_config,
         config.rpc_url.clone(),
-        telegram_config,
+        telegram_sender,
     );
     bot.start().await?;
     

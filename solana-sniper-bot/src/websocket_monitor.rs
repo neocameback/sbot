@@ -207,4 +207,10 @@ impl DexWebSocketManager {
     pub fn get_message_sender(&self) -> mpsc::Sender<WebSocketMessage> {
         self.message_tx.clone()
     }
+}
+
+impl Default for DexWebSocketManager {
+    fn default() -> Self {
+        Self::new()
+    }
 } 

@@ -15,18 +15,13 @@ use tokio::sync::Mutex;
 
 pub mod dex_monitor;
 pub mod websocket_monitor;
+pub mod telegram;
 
 // use dex_monitor::{DexMonitor, TokenMetadata};
 use websocket_monitor::{DexWebSocketManager, WebSocketMessage};
 
 pub use crate::dex_monitor::{DexMonitor, TokenMetadata};
-
-// Enhanced configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TelegramConfig {
-    pub bot_token: String,
-    pub chat_id: String,
-}
+pub use crate::telegram::{TelegramConfig, TelegramSender};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SniperConfig {
@@ -150,7 +145,8 @@ impl SolanaSniperBot {
             solscan_api_url: config.dex_config.solscan_api_url.clone(),
         };
 
-        let dex_monitor = DexMonitor::new(dex_config, config.rpc_url.clone(), Some((config.telegram.bot_token.clone(), config.telegram.chat_id.clone())));
+        let telegram_sender = TelegramSender::new(config.telegram.clone());
+        let dex_monitor = DexMonitor::new(dex_config, config.rpc_url.clone(), telegram_sender);
         let mut websocket_manager = DexWebSocketManager::new();
 
         // Add WebSocket monitors based on configuration
@@ -363,8 +359,13 @@ impl SolanaSniperBot {
             let rpc_url = self.config.rpc_url.clone();
             let message_tx = self.websocket_manager.get_message_sender();
             
+            let telegram_config = TelegramConfig {
+                bot_token: self.config.telegram.bot_token.clone(),
+                chat_id: self.config.telegram.chat_id.clone() 
+            };
+            let telegram_sender = TelegramSender::new(telegram_config);
             tokio::spawn(async move {
-                let dex_monitor = crate::dex_monitor::DexMonitor::new(dex_config, rpc_url, None);
+                let dex_monitor = crate::dex_monitor::DexMonitor::new(dex_config, rpc_url, telegram_sender);
                 if let Err(e) = dex_monitor.monitor_raydium_onchain(message_tx).await {
                     error!("Raydium on-chain monitoring failed: {}", e);
                 }
@@ -433,15 +434,3 @@ impl SolanaSniperBot {
         Ok(())
     }
 }
-
-// Move this function out of the impl block and make it public at the crate root
-pub async fn send_telegram_message(bot_token: &str, chat_id: &str, text: &str) -> Result<()> {
-    let url = format!("https://api.telegram.org/bot{}/sendMessage", bot_token);
-    let params = [
-        ("chat_id", chat_id),
-        ("text", text),
-        ("parse_mode", "Markdown"),
-    ];
-    reqwest::Client::new().post(&url).form(&params).send().await?;
-    Ok(())
-} 
